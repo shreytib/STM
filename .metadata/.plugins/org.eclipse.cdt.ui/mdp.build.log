@@ -1,0 +1,23 @@
+10:35:20 **** Incremental Build of configuration Release for project mdp ****
+make -j8 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -DUSE_HAL_DRIVER -DSTM32F407xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -Os -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc -o "mdp.elf" @"objects.list"   -mcpu=cortex-m4 -T"E:\3004\mdp\STM32F407VETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="mdp.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: mdp.elf
+ 
+arm-none-eabi-size   mdp.elf 
+arm-none-eabi-objdump -h -S  mdp.elf  > "mdp.list"
+arm-none-eabi-objcopy  -O ihex  mdp.elf  "mdp.hex"
+arm-none-eabi-objcopy  -O binary  mdp.elf  "mdp.bin"
+   text	   data	    bss	    dec	    hex	filename
+   3888	     20	   1572	   5480	   1568	mdp.elf
+Finished building: default.size.stdout
+ 
+Finished building: mdp.hex
+Finished building: mdp.bin
+Finished building: mdp.list
+ 
+ 
+ 
+
+10:35:22 Build Finished. 0 errors, 0 warnings. (took 2s.573ms)
+
