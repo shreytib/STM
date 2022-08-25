@@ -19,10 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "oled.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,7 +48,8 @@
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
-
+void StartDefaultBlink(void *argument);
+void show(void *argument);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -86,7 +86,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
-
+  OLED_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -94,11 +94,33 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
-	  HAL_Delay(2000);
+
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
+}
+
+/* idk how to add the user code header thingy */
+/* also there should be an import from cmsis_os which is in a middlewares folder */
+void StartDefaultBlink(void *argument)
+{
+	while (1)
+	{
+		HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+		HAL_Delay(2000);
+	}
+}
+
+void show(void *argument)
+{
+	uint8_t hello[20] = "I am alive\0"; // Write your random message to display on OLED here, end with \0
+	while (1)
+	{
+		OLED_ShowString(10,10,hello); // 3rd param is the pointer to 1st char of the str, 1st and 2nd params refer to the start location of displayed string?
+		OLED_Refresh_Gram(); // Refresh RAM (clear previous display to show new display)
+		HAL_Delay(2000); // You could use a loop with delay to update the message (every 2s)
+	}
 }
 
 /**
