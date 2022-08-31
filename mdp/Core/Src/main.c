@@ -44,6 +44,8 @@
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim8;
 
+UART_HandleTypeDef huart3;
+
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
@@ -81,6 +83,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_USART3_UART_Init(void);
 void StartDefaultTask(void *argument);
 void show(void *argument);
 void motor(void *argument);
@@ -91,7 +94,7 @@ void encoder(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+uint8_t aRxBuffer[20];
 /* USER CODE END 0 */
 
 /**
@@ -124,8 +127,11 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM8_Init();
   MX_TIM2_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
+  // Receive an amount of data from rpi
+  HAL_UART_Receive_IT(&huart3,(uint8_t *)aRxBuffer, 10);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -348,6 +354,39 @@ static void MX_TIM8_Init(void)
 }
 
 /**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -395,7 +434,13 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_UARD_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	// suppress unused argument warning
+	UNUSED(huart);
+	// Whatever received will be put inside
+	HAL_UART_Transmit(&huart3, (uint8_t *)aRxBuffer, 10, 0xFFFF);
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -409,8 +454,14 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
+  // uint8_t ch = 'A';
   for(;;)
   {
+	/* Example to send data to the other side
+	 * HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 0xFFFF);
+	if(ch < 'Z')
+		ch++;
+	else ch = 'A' */
 	HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
     osDelay(1000);
   }
@@ -431,6 +482,8 @@ void show(void *argument)
   uint8_t hello[20] = "I am alive\0";
   for(;;)
   {
+	// Example to show received data
+	//sprintf(Hello, "%s\0", aRxBuffer);
 	OLED_ShowString(10,10,hello);
 	OLED_Refresh_Gram();
     osDelay(1000);
