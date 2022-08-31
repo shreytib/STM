@@ -66,6 +66,10 @@ void Error_Handler(void);
 #define AIN2_GPIO_Port GPIOA
 #define AIN1_Pin GPIO_PIN_3
 #define AIN1_GPIO_Port GPIOA
+#define BIN1_Pin GPIO_PIN_4
+#define BIN1_GPIO_Port GPIOA
+#define BIN5_Pin GPIO_PIN_5
+#define BIN5_GPIO_Port GPIOA
 #define OLED_RST_Pin GPIO_PIN_7
 #define OLED_RST_GPIO_Port GPIOE
 #define OLED_DC_Pin GPIO_PIN_8

@@ -252,7 +252,7 @@ static void MX_TIM2_Init(void)
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
-  sConfig.IC1Filter = 10;
+  sConfig.IC1Filter = 0;
   sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
@@ -360,13 +360,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, OLED_SCL_Pin|OLED_SDA_Pin|OLED_RST_Pin|OLED_DC_Pin
                           |LED3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, AIN2_Pin|AIN1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, AIN2_Pin|AIN1_Pin|BIN1_Pin|BIN5_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : OLED_SCL_Pin OLED_SDA_Pin OLED_RST_Pin OLED_DC_Pin
                            LED3_Pin */
@@ -384,12 +385,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(AIN2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : AIN1_Pin */
-  GPIO_InitStruct.Pin = AIN1_Pin;
+  /*Configure GPIO pins : AIN1_Pin BIN1_Pin BIN5_Pin */
+  GPIO_InitStruct.Pin = AIN1_Pin|BIN1_Pin|BIN5_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(AIN1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
@@ -453,24 +454,31 @@ void motor(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	// speed up
 	while(pwmVal < 4000)
 	{
+		// pwm A
 		HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_RESET);
 		pwmVal++;
 		// modify comparison value for duty cycle
 		__HAL_TIM_SetCompare(&htim8,TIM_CHANNEL_1,pwmVal);
-		sprintf(hello, "Motor: %5d", pwmVal);
+		// obviously ide does not like how we play with sprintf here, ignore the warning for now
+		sprintf(hello, "Motor: %5d\0", pwmVal);
 		OLED_ShowString(10,20,hello);
 		osDelay(10);
 	}
+
+	// slow down
 	while(pwmVal > 0)
 	{
+		// pwm A
 		HAL_GPIO_WritePin(GPIOA, AIN2_Pin, GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(GPIOA, AIN1_Pin, GPIO_PIN_SET);
 		pwmVal--;
+		// modify comparison value for duty cycle
 		__HAL_TIM_SetCompare(&htim8,TIM_CHANNEL_1,pwmVal);
-		sprintf(hello, "Motor: %5d", pwmVal);
+		sprintf(hello, "Motor: %5d\0", pwmVal);
 		OLED_ShowString(10,20,hello);
 		osDelay(10);
 	}
@@ -490,9 +498,40 @@ void encoder(void *argument)
 {
   /* USER CODE BEGIN encoder */
   /* Infinite loop */
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+
+  int cnt1, cnt2, diff;
+  uint32_t tick;
+  uint8_t hello[20];
+  uint16_t dir;
+  cnt1 = __HAL_TIM_GET_COUNTER(&htim2);
+  tick = HAL_GetTick();
+
   for(;;)
   {
-    osDelay(1);
+	if(HAL_GetTick() - tick > 1000L){
+		cnt2 = __HAL_TIM_GET_COUNTER(&htim2);
+		if(__HAL_TIM_IS_TIM_COUNTING_DOWN(&htim2)){
+			if(cnt2 < cnt1)
+				diff = cnt2 - cnt1;
+			else
+				diff = (4294967295 - cnt1) + cnt2;
+		}
+		else{
+			if(cnt2 > cnt1)
+				diff = cnt2 - cnt1;
+			else
+				diff = (4294967295 - cnt1) + cnt2;
+		}
+		sprintf(hello, "Speed from encoder: %5d\0", diff);
+		OLED_ShowString(10,30,hello);
+		dir = __HAL_TIM_IS_TIM_COUNTING_DOWN(&htim2);
+		sprintf(hello, "Dir: %5d\0", dir);
+		OLED_ShowString(10,40,hello);
+		cnt1 = __HAL_TIM_GET_COUNTER(&htim2);
+		tick = HAL_GetTick();
+	}
+    // osDelay(1);
   }
   /* USER CODE END encoder */
 }
